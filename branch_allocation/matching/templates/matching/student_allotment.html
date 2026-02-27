@@ -1,0 +1,75 @@
+{% extends 'matching/base.html' %}
+{% block title %}My Allotment{% endblock %}
+{% block nav_my_allot %}active{% endblock %}
+
+{% block content %}
+<h1>My Allotment</h1>
+<p class="page-subtitle">Your seat allocation based on the stable matching result.</p>
+
+{% if not result %}
+<!-- No matching run yet -->
+<div class="allotment-banner pending">
+  <div class="allotment-label" style="color:var(--gold)">⏳ Results Pending</div>
+  <div class="allotment-college" style="font-size:1.3rem;color:var(--text)">Not Published Yet</div>
+  <div class="allotment-meta">
+    The admin has not run the stable matching algorithm yet. Check back later.
+  </div>
+</div>
+
+{% elif allotment and allotment.is_matched %}
+<!-- Matched -->
+<div class="allotment-banner matched">
+  <div class="allotment-label" style="color:var(--green)">🎉 Seat Allotted</div>
+  <div class="allotment-college">{{ allotment.branch.college }}</div>
+  <div class="allotment-branch-name">{{ allotment.branch.branch }}</div>
+  <div class="allotment-meta">
+    This was your
+    <strong style="color:var(--gold)">preference #{{ allotment.preference_rank }}</strong>
+    out of {{ total_prefs }} ·
+    {{ allotment.branch.seats }} total seat{{ allotment.branch.seats|pluralize }} in this branch
+  </div>
+</div>
+
+{% else %}
+<!-- Unmatched -->
+<div class="allotment-banner unmatched">
+  <div class="allotment-label" style="color:var(--red)">⚠ No Seat Allotted</div>
+  <div class="allotment-college" style="font-size:1.4rem">Unmatched</div>
+  <div class="allotment-meta" style="color:var(--muted);margin-top:8px">
+    Unfortunately, no available seat matched your preferences.
+    Please contact the administrator for further guidance.
+  </div>
+</div>
+{% endif %}
+
+<!-- Preference Summary -->
+{% if top_prefs %}
+<div class="card">
+  <h2>My Preference List</h2>
+  <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">
+    Showing top {{ top_prefs|length }} of {{ total_prefs }} preferences
+  </p>
+
+  {% for pref in top_prefs %}
+  <div class="pref-row" style="cursor:default;
+    {% if result and allotment and allotment.is_matched and allotment.branch.id == pref.branch.id %}
+      border-color:var(--green);background:var(--green-dim);
+    {% endif %}">
+    <span class="pref-rank">#{{ pref.rank }}</span>
+    <span class="pref-name">{{ pref.branch.college }} — {{ pref.branch.branch }}</span>
+    {% if result and allotment and allotment.is_matched and allotment.branch.id == pref.branch.id %}
+    <span class="pill pill-green">✓ Allotted</span>
+    {% else %}
+    <span class="pill pill-blue">{{ pref.branch.seats }} seats</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  {% if total_prefs > 15 %}
+  <p style="font-size:0.8rem;color:var(--muted);margin-top:10px">
+    + {{ total_prefs|add:"-15" }} more preferences not shown
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

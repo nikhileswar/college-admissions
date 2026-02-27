@@ -1,0 +1,85 @@
+{% extends 'matching/base.html' %}
+{% block title %}All Preferences{% endblock %}
+{% block nav_prefs %}active{% endblock %}
+
+{% block content %}
+<h1>Student Preferences</h1>
+<p class="page-subtitle">View all submitted preference lists and submission status.</p>
+
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-val">{{ total }}</div>
+    <div class="stat-lbl">Total Students</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ submitted }}</div>
+    <div class="stat-lbl">Submitted</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--gold)">{{ pending }}</div>
+    <div class="stat-lbl">Pending</div>
+  </div>
+</div>
+
+<div class="card">
+  <form method="get" style="margin-bottom:16px">
+    <div class="search-wrap">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search student name or username…">
+    </div>
+  </form>
+
+  {% if student_data %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>AIR</th>
+          <th>Status</th>
+          <th>Top 5 Preferences</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in student_data %}
+        <tr>
+          <td class="name-cell">
+            {{ item.profile.user.get_full_name|default:item.profile.user.username }}<br>
+            <span class="mono">{{ item.profile.user.username }}</span>
+          </td>
+          <td>
+            {% if item.profile.air_rank %}
+            <span class="pill pill-blue">{{ item.profile.air_rank }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="pill {% if item.profile.has_submitted %}pill-green{% else %}pill-yellow{% endif %}">
+              {% if item.profile.has_submitted %}✓ Submitted{% else %}Pending{% endif %}
+            </span>
+          </td>
+          <td>
+            {% for pref in item.top5 %}
+            <div style="font-size:0.8rem;color:var(--muted);line-height:1.8">
+              <span style="color:{% if forloop.counter <= 3 %}var(--accent){% else %}var(--muted){% endif %};font-family:'DM Mono',monospace;font-size:0.7rem">#{{ pref.rank }}</span>
+              {{ pref.branch.college }} — {{ pref.branch.branch }}
+            </div>
+            {% empty %}
+            <span class="empty">No preferences yet</span>
+            {% endfor %}
+            {% if item.total_prefs > 5 %}
+            <span style="font-size:0.75rem;color:var(--muted)">+{{ item.total_prefs|add:"-5" }} more</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'admin_student_detail' item.profile.id %}" class="btn btn-secondary btn-sm">View All</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No students found{% if q %} matching "{{ q }}"{% endif %}.</p>
+  {% endif %}
+</div>
+{% endblock %}

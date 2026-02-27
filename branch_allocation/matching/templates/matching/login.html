@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — CollegeMatch</title>
+<link rel="stylesheet" href="{% static 'matching/css/main.css' %}">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-box">
+    <div class="login-logo">College<span>Match</span></div>
+    <div class="login-tagline">JEE Advanced 2025 — Stable Seat Allocation System</div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'error' }}" style="margin-bottom:12px">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="card">
+      <!-- Main tab switcher: Student | Admin -->
+      <div class="tab-switcher">
+        <button type="button" id="btn-student" class="{% if active_tab != 'admin' %}active{% endif %}"
+                onclick="switchMainTab('student')">🎓 Student</button>
+        <button type="button" id="btn-admin"   class="{% if active_tab == 'admin' %}active{% endif %}"
+                onclick="switchMainTab('admin')">⚙ Admin</button>
+      </div>
+
+      <!-- ── STUDENT PANEL ── -->
+      <div id="tab-student" class="tab-panel {% if active_tab != 'admin' %}active{% endif %}">
+
+        <!-- Sub-tabs: Login | Sign Up -->
+        <div class="signup-tab-row">
+          <button type="button" id="sbtn-login"  class="signup-tab-btn {% if active_tab != 'signup' %}active{% endif %}"
+                  onclick="switchSignupTab('login')">Login</button>
+          <button type="button" id="sbtn-signup" class="signup-tab-btn {% if active_tab == 'signup' %}active{% endif %}"
+                  onclick="switchSignupTab('signup')">Sign Up</button>
+        </div>
+
+        <!-- Student Login -->
+        <div id="stab-login" class="signup-tab-panel {% if active_tab != 'signup' %}active{% endif %}">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="student_login">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" name="username"
+                     value="{{ login_form.data.username|default:'' }}"
+                     placeholder="Your username" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" name="password"
+                     placeholder="Your password" autocomplete="current-password" required>
+            </div>
+            {% if login_form.errors and active_tab != 'signup' %}
+            <div class="alert alert-error" style="margin-bottom:12px">Invalid username or password.</div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary btn-full">Login as Student →</button>
+          </form>
+          <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin-top:14px">
+            Don't have an account?
+            <a href="#" onclick="switchSignupTab('signup');return false" style="color:var(--accent)">Sign up here</a>
+          </p>
+        </div>
+
+        <!-- Student Sign Up -->
+        <div id="stab-signup" class="signup-tab-panel {% if active_tab == 'signup' %}active{% endif %}">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="signup">
+            <div class="form-row" style="margin-bottom:16px">
+              <div class="form-group" style="margin-bottom:0">
+                <label>First Name</label>
+                <input type="text" name="first_name"
+                       value="{{ signup_form.first_name.value|default:'' }}"
+                       placeholder="First name" required>
+                {% if signup_form.first_name.errors %}
+                <div class="field-error">{{ signup_form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Last Name</label>
+                <input type="text" name="last_name"
+                       value="{{ signup_form.last_name.value|default:'' }}"
+                       placeholder="Last name (optional)">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" name="username"
+                     value="{{ signup_form.username.value|default:'' }}"
+                     placeholder="Choose a username" autocomplete="username" required>
+              {% if signup_form.username.errors %}
+              <div class="field-error">{{ signup_form.username.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-row" style="margin-bottom:16px">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Create a password" required>
+                {% if signup_form.password.errors %}
+                <div class="field-error">{{ signup_form.password.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Confirm Password</label>
+                <input type="password" name="password2" placeholder="Repeat password" required>
+                {% if signup_form.password2.errors %}
+                <div class="field-error">{{ signup_form.password2.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            {% if signup_form.non_field_errors %}
+            <div class="alert alert-error" style="margin-bottom:12px">{{ signup_form.non_field_errors.0 }}</div>
+            {% endif %}
+            <button type="submit" class="btn btn-success btn-full">Create Account →</button>
+          </form>
+          <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin-top:14px">
+            Already have an account?
+            <a href="#" onclick="switchSignupTab('login');return false" style="color:var(--accent)">Login here</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- ── ADMIN PANEL ── -->
+      <div id="tab-admin" class="tab-panel {% if active_tab == 'admin' %}active{% endif %}">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="admin_login">
+          <div class="form-group">
+            <label>Admin Username</label>
+            <input type="text" name="username" value="admin" placeholder="admin" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Admin password" autocomplete="current-password">
+          </div>
+          {% if active_tab == 'admin' and messages %}
+          {% for message in messages %}
+          <div class="alert alert-error" style="margin-bottom:12px">{{ message }}</div>
+          {% endfor %}
+          {% endif %}
+          <button type="submit" class="btn btn-primary btn-full">Login as Admin →</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="demo-hint">
+      Demo — Admin: <strong>admin / admin123</strong> &nbsp;·&nbsp; Students: password <strong>jee2025</strong><br>
+      Load demo data from the Admin → Setup panel after logging in.
+    </div>
+  </div>
+</div>
+<script src="{% static 'matching/js/main.js' %}"></script>
+</body>
+</html>

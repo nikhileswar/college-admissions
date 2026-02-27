@@ -1,0 +1,119 @@
+{% extends 'matching/base.html' %}
+{% block title %}Matching Results{% endblock %}
+{% block nav_results %}active{% endblock %}
+
+{% block content %}
+<h1>Matching Results</h1>
+<p class="page-subtitle">Gale-Shapley stable matching — student-optimal seat allocation.</p>
+
+<form method="post" style="margin-bottom:24px">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="run_matching">
+  <button type="submit" class="btn btn-gold"
+          onclick="return confirmAction('Run stable matching? This will replace any existing result.')">
+    ⚡ Run Stable Matching
+  </button>
+</form>
+
+{% if result %}
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ result.total_matched }}</div>
+    <div class="stat-lbl">Matched</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--red)">{{ result.total_unmatched }}</div>
+    <div class="stat-lbl">Unmatched</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--gold)">{{ result.total_unfilled }}</div>
+    <div class="stat-lbl">Seats Unfilled</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="font-size:1rem;color:var(--muted)">{{ result.run_at|date:"d M Y H:i" }}</div>
+    <div class="stat-lbl">Last Run</div>
+  </div>
+</div>
+
+<div class="alert alert-success">
+  ✓ Stable matching computed. No student-branch pair can both prefer each other over their current assignment.
+</div>
+
+{% for item in branch_results %}
+<div class="result-card">
+  <div class="result-header">
+    <div>
+      <div class="result-college">{{ item.branch.college }}</div>
+      <div class="result-branch-name">{{ item.branch.branch }}</div>
+    </div>
+    <span class="pill {% if item.filled == item.branch.seats %}pill-green{% else %}pill-yellow{% endif %}">
+      {{ item.filled }}/{{ item.branch.seats }} filled
+    </span>
+  </div>
+  <div class="result-students">
+    {% for allotment in item.allotments %}
+    <span class="student-chip chip-matched"
+          title="Preference rank: #{{ allotment.preference_rank }}">
+      {{ allotment.student.user.get_full_name|default:allotment.student.user.username }}
+      <span style="opacity:0.55;font-size:0.7rem"> #{{ allotment.preference_rank }}</span>
+    </span>
+    {% endfor %}
+    {% for i in item.empty|rjust:item.empty %}
+    <span class="student-chip chip-empty">Empty seat</span>
+    {% endfor %}
+    {% if not item.allotments and item.branch.seats > 0 %}
+    {% for i in "x"|ljust:item.branch.seats %}
+    <span class="student-chip chip-empty">Empty seat</span>
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+{% if unmatched %}
+<div class="card" style="margin-top:16px">
+  <h2>Unmatched Students</h2>
+  <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
+    These students exhausted all preferences or no seats remained.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    {% for allotment in unmatched %}
+    <span class="student-chip chip-unmatched">
+      {{ allotment.student.user.get_full_name|default:allotment.student.user.username }}
+    </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card" style="text-align:center;padding:48px">
+  <div style="font-size:2.5rem;margin-bottom:12px">⚡</div>
+  <h2 style="margin-bottom:8px">No Results Yet</h2>
+  <p style="color:var(--muted);font-size:0.9rem">
+    Click "Run Stable Matching" above to compute seat allocations.
+  </p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Render empty seat chips properly
+document.querySelectorAll('.result-students').forEach(container => {
+  const card = container.closest('.result-card');
+  if (!card) return;
+  const filledText = card.querySelector('.result-header .pill').textContent;
+  const match = filledText.match(/(\d+)\/(\d+)/);
+  if (!match) return;
+  const filled = parseInt(match[1]);
+  const total  = parseInt(match[2]);
+  for (let i = 0; i < total - filled; i++) {
+    const chip = document.createElement('span');
+    chip.className = 'student-chip chip-empty';
+    chip.textContent = 'Empty seat';
+    container.appendChild(chip);
+  }
+});
+</script>
+{% endblock %}

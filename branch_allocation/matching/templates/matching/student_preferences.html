@@ -1,0 +1,57 @@
+{% extends 'matching/base.html' %}
+{% block title %}My Preferences{% endblock %}
+{% block nav_my_prefs %}active{% endblock %}
+
+{% block content %}
+<h1>My Preferences</h1>
+<p class="page-subtitle">
+  Drag rows to reorder your college-branch preference list, then save.
+  {% if profile.air_rank %}Your AIR Rank: <strong>{{ profile.air_rank }}</strong>{% endif %}
+</p>
+
+<div class="info-box">
+  <strong>How to use:</strong> Drag the ⠿ handle to reorder. Rank #1 = most preferred.
+  Click <strong>Save &amp; Submit</strong> when done — you can update until the admin runs the matching.
+</div>
+
+<div class="card" id="pref-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">Preference List
+      <span style="font-size:0.85rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:400">
+        ({{ total_branches }} branches)
+      </span>
+    </h2>
+    <span id="pref-pill" class="pill {% if profile.has_submitted %}pill-green{% else %}pill-yellow{% endif %}">
+      {% if profile.has_submitted %}✓ Submitted{% else %}Not submitted yet{% endif %}
+    </span>
+  </div>
+
+  <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">⠿ Drag rows to reorder</p>
+
+  <div id="pref-list">
+    {% for branch in ordered_branches %}
+    <div class="pref-row" draggable="true" data-branch-id="{{ branch.id }}">
+      <span class="pref-rank">#{{ forloop.counter }}</span>
+      <span class="pref-name">{{ branch.college }} — {{ branch.branch }}</span>
+      <span class="pill pill-blue">{{ branch.seats }} seats</span>
+      <span class="drag-handle">⠿</span>
+    </div>
+    {% empty %}
+    <p class="empty">No branches available yet. Ask the admin to add colleges and branches.</p>
+    {% endfor %}
+  </div>
+
+  {% if ordered_branches %}
+  <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+    <button id="save-btn" class="btn btn-success" onclick="savePreferences()">✓ Save &amp; Submit</button>
+    <a href="{% url 'student_preferences' %}" class="btn btn-secondary">↺ Reset to Saved</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => initDragList('pref-list'));
+</script>
+{% endblock %}

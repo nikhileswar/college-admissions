@@ -1,0 +1,70 @@
+{% extends 'matching/base.html' %}
+{% block title %}Student Ranks{% endblock %}
+{% block nav_ranks %}active{% endblock %}
+
+{% block content %}
+<h1>Student Ranks</h1>
+<p class="page-subtitle">Assign or update JEE Advanced AIR rank for each student.</p>
+
+<div class="card">
+  <h2>Update Rank</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_rank">
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Student Name</label>
+        <select name="student" required>
+          <option value="">Select a student</option>
+          {% for profile in rank_form.fields.student.queryset %}
+          <option value="{{ profile.id }}" {% if rank_form.student.value|stringformat:'s' == profile.id|stringformat:'s' %}selected{% endif %}>
+            {{ profile.user.get_full_name|default:profile.user.username }}
+          </option>
+          {% endfor %}
+        </select>
+        {% if rank_form.student.errors %}<div class="field-error">{{ rank_form.student.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group" style="margin-bottom:0;flex:0 0 160px">
+        <label>AIR Rank</label>
+        <input type="number" name="air_rank" value="{{ rank_form.air_rank.value|default:'' }}" min="1" placeholder="e.g. 42" required>
+        {% if rank_form.air_rank.errors %}<div class="field-error">{{ rank_form.air_rank.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="shrink" style="padding-bottom:1px">
+        <button type="submit" class="btn btn-primary">Save Rank</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Current Student Rankings</h2>
+  {% if students %}
+  <table class="prefs-table">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Username</th>
+        <th>AIR Rank</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in students %}
+      <tr>
+        <td>{{ profile.user.get_full_name|default:profile.user.username }}</td>
+        <td>{{ profile.user.username }}</td>
+        <td>
+          {% if profile.air_rank %}
+          <span class="pill pill-blue">{{ profile.air_rank }}</span>
+          {% else %}
+          <span class="pill pill-yellow">Not set</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No students found.</p>
+  {% endif %}
+</div>
+{% endblock %}

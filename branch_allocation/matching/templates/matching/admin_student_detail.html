@@ -1,0 +1,34 @@
+{% extends 'matching/base.html' %}
+{% block title %}{{ profile.display_name }} — Preferences{% endblock %}
+{% block nav_prefs %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <a href="{% url 'admin_preferences' %}" class="btn btn-secondary btn-sm">← Back to All Students</a>
+</div>
+
+<h1>{{ profile.user.get_full_name|default:profile.user.username }}</h1>
+<p class="page-subtitle">
+  {% if profile.air_rank %}AIR {{ profile.air_rank }} · {% endif %}
+  Username: {{ profile.user.username }} ·
+  <span class="pill {% if profile.has_submitted %}pill-green{% else %}pill-yellow{% endif %}">
+    {% if profile.has_submitted %}✓ Submitted{% else %}Not submitted{% endif %}
+  </span>
+</p>
+
+<div class="card">
+  <h2>Full Preference List ({{ prefs.count }} branches)</h2>
+  {% for pref in prefs %}
+  <div class="list-item">
+    <div class="list-item-left">
+      <span class="pref-rank" style="min-width:34px">#{{ pref.rank }}</span>
+      <span class="college-name">{{ pref.branch.college }}</span>
+      <span>— {{ pref.branch.branch }}</span>
+    </div>
+    <span class="muted">{{ pref.branch.seats }} seats</span>
+  </div>
+  {% empty %}
+  <p class="empty">No preferences recorded yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

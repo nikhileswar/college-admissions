@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}CollegeMatch{% endblock %} — JEE Advanced 2025</title>
+<link rel="stylesheet" href="{% static 'matching/css/main.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<header class="site-header">
+  <a href="/" class="logo">College<span>Match</span></a>
+
+  <nav class="header-nav">
+    {% if user.is_staff %}
+      <a href="{% url 'admin_setup' %}"       class="nav-link {% block nav_setup %}{% endblock %}">⚙ Setup</a>
+      <a href="{% url 'admin_student_ranks' %}" class="nav-link {% block nav_ranks %}{% endblock %}">🏅 Student Ranks</a>
+      <a href="{% url 'admin_preferences' %}" class="nav-link {% block nav_prefs %}{% endblock %}">📋 Preferences</a>
+      <a href="{% url 'admin_results' %}"     class="nav-link {% block nav_results %}{% endblock %}">🎓 Results</a>
+    {% else %}
+      <a href="{% url 'student_preferences' %}" class="nav-link {% block nav_my_prefs %}{% endblock %}">📝 My Preferences</a>
+      <a href="{% url 'student_allotment' %}"   class="nav-link {% block nav_my_allot %}{% endblock %}">🎓 My Allotment</a>
+    {% endif %}
+  </nav>
+
+  <div class="header-right">
+    <div class="user-badge">
+      <div class="role-dot {% if user.is_staff %}admin{% else %}student{% endif %}"></div>
+      <span>
+        {% if user.is_staff %}Admin{% else %}{{ user.first_name|default:user.username }}{% endif %}
+      </span>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm">Sign out</a>
+  </div>
+</header>
+{% endif %}
+
+<div {% if user.is_authenticated %}class="main-container"{% endif %}>
+  {% if messages %}
+  <div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<div id="toast"></div>
+<script src="{% static 'matching/js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

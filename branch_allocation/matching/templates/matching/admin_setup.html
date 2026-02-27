@@ -1,0 +1,183 @@
+{% extends 'matching/base.html' %}
+{% block title %}Setup{% endblock %}
+{% block nav_setup %}active{% endblock %}
+
+{% block content %}
+<h1>System Setup</h1>
+<p class="page-subtitle">Manage colleges, branches, and the student roster.</p>
+
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-val">{{ branches.count }}</div>
+    <div class="stat-lbl">Branch Slots</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{{ total_seats }}</div>
+    <div class="stat-lbl">Total Seats</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">{{ students.count }}</div>
+    <div class="stat-lbl">Students</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ submitted_count }}<span style="font-size:1rem;color:var(--muted)">/{{ students.count }}</span></div>
+    <div class="stat-lbl">Prefs Submitted</div>
+  </div>
+</div>
+
+<!-- ── Colleges & Branches ── -->
+<div class="card">
+  <h2>Colleges &amp; Branches</h2>
+  <div class="info-box">
+    Add each <strong>college + branch</strong> pair with seat capacity. Students will rank these.
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_branch">
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>College</label>
+        <input type="text" name="college" value="{{ branch_form.college.value|default:'' }}"
+               placeholder="IIT Bombay" required>
+        {% if branch_form.college.errors %}<div class="field-error">{{ branch_form.college.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Branch</label>
+        <input type="text" name="branch" value="{{ branch_form.branch.value|default:'' }}"
+               placeholder="Computer Science & Engg" required>
+        {% if branch_form.branch.errors %}<div class="field-error">{{ branch_form.branch.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group" style="margin-bottom:0;flex:0 0 120px;min-width:100px">
+        <label>Seats</label>
+        <input type="number" name="seats" value="{{ branch_form.seats.value|default:5 }}" min="1" max="500">
+      </div>
+      <div class="shrink" style="padding-bottom:1px">
+        <button type="submit" class="btn btn-primary">+ Add Branch</button>
+      </div>
+    </div>
+    {% if branch_form.non_field_errors %}
+    <div class="alert alert-error">{{ branch_form.non_field_errors.0 }}</div>
+    {% endif %}
+  </form>
+
+  <hr class="sep">
+
+  {% if branches %}
+  {% for b in branches %}
+  <div class="list-item">
+    <div class="list-item-left">
+      <span class="college-name">{{ b.college }}</span>
+      <span>— {{ b.branch }}</span>
+    </div>
+    <div class="list-item-right">
+      <span class="muted">{{ b.seats }} seat{{ b.seats|pluralize }}</span>
+      <form method="post" style="margin:0">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_branch">
+        <input type="hidden" name="branch_id" value="{{ b.id }}">
+        <button type="submit" class="btn btn-danger btn-sm"
+                onclick="return confirmAction('Delete {{ b.college }} — {{ b.branch }}?')">✕</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty">No branches added yet.</p>
+  {% endif %}
+</div>
+
+<!-- ── Student Roster ── -->
+<div class="card">
+  <h2>Student Roster</h2>
+  <div class="info-box">
+    Students added here can log in with the password you specify. They can also self-register via the <strong>Sign Up</strong> tab on the login page.
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_student">
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>First Name</label>
+        <input type="text" name="first_name" value="{{ student_form.first_name.value|default:'' }}"
+               placeholder="First name" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Last Name</label>
+        <input type="text" name="last_name" value="{{ student_form.last_name.value|default:'' }}"
+               placeholder="Last name">
+      </div>
+      <div class="form-group" style="margin-bottom:0;flex:0 0 110px;min-width:90px">
+        <label>AIR Rank</label>
+        <input type="number" name="air_rank" value="{{ student_form.air_rank.value|default:'' }}"
+               placeholder="1" min="1" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Username</label>
+        <input type="text" name="username" value="{{ student_form.username.value|default:'' }}"
+               placeholder="username" required>
+        {% if student_form.username.errors %}<div class="field-error">{{ student_form.username.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Password</label>
+        <input type="text" name="password" value="{{ student_form.password.value|default:'jee2025' }}"
+               placeholder="jee2025">
+      </div>
+      <div class="shrink" style="padding-bottom:1px">
+        <button type="submit" class="btn btn-primary">+ Add Student</button>
+      </div>
+    </div>
+  </form>
+
+  <hr class="sep">
+
+  {% if students %}
+  {% for profile in students %}
+  <div class="list-item">
+    <div class="list-item-left">
+      <span style="font-weight:600">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+      {% if profile.air_rank %}<span class="pill pill-blue">AIR {{ profile.air_rank }}</span>{% endif %}
+      <span class="pill {% if profile.has_submitted %}pill-green{% else %}pill-yellow{% endif %}">
+        {% if profile.has_submitted %}✓ Submitted{% else %}Pending{% endif %}
+      </span>
+    </div>
+    <div class="list-item-right">
+      <span class="muted">{{ profile.user.username }}</span>
+      <form method="post" style="margin:0">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_student">
+        <input type="hidden" name="student_id" value="{{ profile.id }}">
+        <button type="submit" class="btn btn-danger btn-sm"
+                onclick="return confirmAction('Delete student {{ profile.user.get_full_name|default:profile.user.username }}?')">✕</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty">No students added yet.</p>
+  {% endif %}
+</div>
+
+<!-- ── Bulk Actions ── -->
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+  <form method="post" style="margin:0">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="load_demo">
+    <button type="submit" class="btn btn-gold"
+            onclick="return confirmAction('Load JEE Advanced 2025 demo data? This will replace all existing data.')">
+      📋 Load JEE 2025 Demo (200 Students, 23 IITs)
+    </button>
+  </form>
+  <form method="post" style="margin:0">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="reset_all">
+    <button type="submit" class="btn btn-danger"
+            onclick="return confirmAction('⚠ This will DELETE all data including students, branches, and results. Are you sure?')">
+      🗑 Reset Everything
+    </button>
+  </form>
+</div>
+{% endblock %}
